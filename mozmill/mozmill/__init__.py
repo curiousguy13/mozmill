@@ -16,6 +16,7 @@ import sys
 import tempfile
 from time import sleep
 import traceback
+import random
 
 from manifestparser import TestManifest
 import mozinfo
