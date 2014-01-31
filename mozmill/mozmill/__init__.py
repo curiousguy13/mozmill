@@ -11,12 +11,13 @@ import copy
 from datetime import datetime
 from optparse import OptionGroup
 import os
+import random
 import socket
 import sys
 import tempfile
 from time import sleep
 import traceback
-import random
+
 
 from manifestparser import TestManifest
 import mozinfo
@@ -196,7 +197,7 @@ class MozMill(object):
 
         # disable the crashreporter
         os.environ['MOZ_CRASHREPORTER_NO_REPORT'] = '1'
-
+	
     ### methods for event listeners
 
     def setup_handlers(self, handlers):
@@ -371,7 +372,7 @@ class MozMill(object):
 
         return frame
 
-    def run(self, tests, restart=False):
+    def run(self, tests, restart=False, shuffle=False):
         """Run all the tests.
 
         Arguments:
@@ -379,6 +380,7 @@ class MozMill(object):
 
         Keyword Arguments:
         restart -- If True the application will be restarted between each test
+	shuffle -- If True the tests will be shuffled
 
         """
         try:
@@ -386,6 +388,11 @@ class MozMill(object):
 
             # run tests
             tests = list(tests)
+
+	    # shuffle tests if shuffle=True
+	    if shuffle:
+		random.shuffle(tests)
+
             while tests:
                 test = tests.pop(0)
                 self.running_test = test
@@ -707,6 +714,11 @@ class CLI(mozrunner.CLI):
                          dest='screenshots_path',
                          metavar='PATH',
                          help='Path of directory to use for screenshots')
+	group.add_option("--shuffle",
+			dest='shuffle',
+			action='store_true',
+			default=False,
+			help="Run tests in a random order")
 
         if self.handlers:
             group.add_option('--disable',
@@ -796,7 +808,7 @@ class CLI(mozrunner.CLI):
         exception = None
         tests = self.manifest.active_tests(**mozinfo.info)
         try:
-            mozmill.run(tests, self.options.restart)
+            mozmill.run(tests, self.options.restart, self.options.shuffle)
         except:
             exception_type, exception, tb = sys.exc_info()
 
